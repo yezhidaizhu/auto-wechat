@@ -4,7 +4,4 @@ const Wx = require('./utils/wx');
   const wx = await new Wx();
   await wx.login();
 
-  wx.getNewChatMsg((msg) => {
-    console.log(msg);
-  })
 })()

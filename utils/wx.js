@@ -140,6 +140,25 @@ class Wx {
     return [...this.unreadMsg];
   }
 
+  // 选中聊天对象
+  async chatWith(user) {
+    const { dataUsername } = user;
+    const selector = `data-username="${dataUsername}"`;
+    await this.page.click(selector);
+  }
+
+  // 发送信息
+  async sendMsg(msg) {
+    await this.page.type("#editArea", msg);
+    await this.page.click(".btn.btn_send");
+  }
+
+  // 选中并发送信息
+  async sendMsgToUser(user, msg) {
+    await this.chatWith(user);
+    await this.sendMsg(msg);
+  }
+
   // 关闭
   close() {
     try {
@@ -151,3 +170,9 @@ class Wx {
 
 
 module.exports = Wx;
+
+
+// TODO 输出文字不同颜色
+// 登录失败提醒
+
+// 别处登录错误处理

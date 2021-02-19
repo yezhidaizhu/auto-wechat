@@ -32,8 +32,9 @@ function handleHtmlGetMsg() {
           const msg = chat.querySelector(".msg").innerText; // 最新信息
           const nickname = chat.querySelector(".nickname").innerText; // 昵称
           const number = redMarker.innerText;
+          const dataUsername = chat.getAttribute("data-username");
           unreadMsg.push({
-            ext, nickname, msg, number
+            ext, nickname, msg, number, dataUsername
           })
         } else { times++; }
         if (times > 2) break;
