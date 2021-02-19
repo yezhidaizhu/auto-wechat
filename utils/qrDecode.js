@@ -1,8 +1,9 @@
 const decodeImage = require('jimp').read;
 const qrcodeReader = require('qrcode-reader');
 
-module.exports = function qrDecode(data, callback) {
-  decodeImage(data, function (err, image) {
+// 获取二维码信息
+function qrDecode(filePath, callback) {
+  decodeImage(filePath, function (err, image) {
     if (err) {
       callback(false);
       return;
@@ -24,6 +25,4 @@ module.exports = function qrDecode(data, callback) {
   });
 }
 
-// qrDecode("123.png",function(data){
-//   console.log(data);
-// });
+module.exports = qrDecode;
