@@ -22,52 +22,77 @@ const unreadMsg = [];
 
   // 等待加载登录的二维码
   log("加载登录二维码.....");
-  const finalLoginResponse = await page.waitForResponse(async response => {
-    if (
-      response.url().includes(loginQrcodeUrl) &&
-      response.status() === 200
-    ) {
-      log("二维码加载完成，请扫码登录");
-      // 获取二维码图片
-      axios({
-        method: 'get',
-        url: response.url(),
-        responseType: 'stream'
-      }).then(async response => {
-        response.data.pipe(fs.createWriteStream(qrcodePath));
-        setTimeout(() => {
-          qrDecode(qrcodePath, data => {
-            if (!data) {
-              console.log('二维码解析出错');
-              return;
-            }
-            qrcode.generate(data, { small: true }, function (qrcode) {
-              console.log(qrcode);
-            });
-          });
-        }, 100);
-      });
-      return 'ok';
+  getQrcode(async (qrcode) => {
+    if (!qrcode) {
+      console.log('二维码解析出错');
+      page.reload();
+      getQrcode;
+      return;
     }
-  })
-  finalLoginResponse.ok();
+    log("二维码加载完成，请扫码登录");
+  });
 
 
   // 登录成功判断
-  await page.waitForResponse(async response => {
-    if (
-      response.url().includes(webwxinitUrl) &&
-      response.status() === 200
-    ) {
-      console.log("登录成功");
-      // setTimeout(async () => {
-      //   await page.screenshot({ path: screenshotPath });
-      //   newChatMsg
-      // }, 500);
-      newChatMsg();
-      return 'ok';
-    }
-  })
+  checkLogin(null, () => {
+    console.log("扫描登录超时！！！请扫描新的二维码");
+    getQrcode();
+  });
+
+  // 获取登录的二维码
+  function getQrcode(cb, whenTimeout) {
+    page.waitForResponse(async response => {
+      if (
+        response.url().includes(loginQrcodeUrl) &&
+        response.status() === 200
+      ) {
+        // 获取二维码图片
+        axios({
+          method: 'get',
+          url: response.url(),
+          responseType: 'stream'
+        }).then(async response => {
+          const ws = fs.createWriteStream(qrcodePath);
+          response.data.pipe(ws);
+          ws.on('finish', () => {
+            qrDecode(qrcodePath, data => {
+              if (!data) {
+                typeof cb === "function" && cb();
+              } else {
+                qrcode.generate(data, { small: true }, function (qrcode) {
+                  typeof cb === "function" && cb(qrcode);
+                });
+              }
+            });
+          });
+        });
+        return 'ok';
+      }
+    }).then(finalLoginResponse => {
+      finalLoginResponse.ok();
+    }).catch(e => {
+      typeof whenTimeout === "function" && whenTimeout();
+    });
+  }
+
+  // 登录判断
+  function checkLogin(cb, whenTimeout) {
+    page.waitForResponse(async response => {
+      if (
+        response.url().includes(webwxinitUrl) &&
+        response.status() === 200
+      ) {
+        console.log("登录成功");
+        typeof cb === "function" && cb(true);
+        return 'ok';
+      }
+      // 登录失败判断（出现不能登录情况）
+    }).then(finalLoginResponse => {
+      finalLoginResponse.ok();
+    }).catch(e => {
+      typeof whenTimeout === "function" && whenTimeout();
+    });
+  }
 
   // 获取新信息,(红点信息，只抓取用户聊天信息，不抓取文件传输等信息)
   function newChatMsg() {
@@ -124,5 +149,11 @@ const unreadMsg = [];
 function log(msg) {
   console.log(msg);
 }
+
+// TODO 输出文字不同颜色
+// 登录失败提醒
+
+// 别处登录错误处理
+
 
 
