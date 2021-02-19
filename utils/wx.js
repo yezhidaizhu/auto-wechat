@@ -89,11 +89,63 @@ class Wx {
     this.page.waitForResponse(async response => {
       if (response.url().includes(synccheckUrl)) {
         const msg = await this.page.evaluate(handleHtmlGetMsg);
-        console.log(msg);
+        this.unreadMsg = msg;
+        typeof cb === "function" && cb(msg);
       }
     }, { timeout: 0 }).catch((e) => {
       console.log("信息获取失败");
     })
+  }
+
+  // 循环登录
+  login = async () => {
+    return new Promise(resolve => {
+      const _this = this;
+      // 等待加载登录的二维码
+      console.log("加载登录二维码.....");
+      _login();
+
+      function _getQrcode() {
+        _this.getQrcode(async (qrcode) => {
+          if (!qrcode) {
+            console.log('二维码解析出错');
+            _this.page.reload();
+            _getQrcode();
+            return;
+          }
+          console.log("二维码加载完成，请扫码登录");
+          console.log(qrcode);
+        });
+      }
+
+      function _login() {
+        _getQrcode();
+        // 登录成功判断
+        _this.checkLogin((status) => {
+          if (status) {
+            console.log("登录成功");
+            resolve('login_ok');
+          }
+        }, () => {
+          console.log("扫描登录超时！！！请扫描新的二维码......");
+          _this.page.reload();
+          _login(); // 循环登录
+        });
+      }
+    })
+  }
+
+  // 获取红点信息
+  async getUnreadMsg() {
+    return [...this.unreadMsg];
+  }
+
+  // 关闭
+  close() {
+    try {
+      this.browser.close();
+    } catch (e) {
+    }
   }
 }
 

@@ -40,18 +40,6 @@ function handleHtmlGetMsg() {
       }
       return unreadMsg;
     }
-
-    function throttle(fn, wait) {
-      let timer = null;
-      let start = Date.now();
-      return e => {
-        if (Date.now() - start >= wait) {
-          clearTimeout(timer)
-          timer = setTimeout(fn.bind(this, e), wait);
-          start = Date.now()
-        }
-      };
-    }
   })
 }
 
